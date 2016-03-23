@@ -735,10 +735,10 @@ namespace SkinChanger
         }
 
         public static ArrayList GetSkins(string model)
-        {
+        {                    //http://ddragon.leagueoflegends.com/cdn/6.5.1/data/zh_CN/champion/Ryze.json
             var champJson =
-                new WebClient().DownloadString(
-                    DataDragonBase + "cdn/" + GameVersion + "/data/en_US/champion/" + model + ".json");
+               new WebClient().DownloadString(
+                    DataDragonBase + "cdn/" + GameVersion + "/data/zh_CN/champion/" + model + ".json");
             return
                 (ArrayList)
                     ((Dictionary<string, object>)
