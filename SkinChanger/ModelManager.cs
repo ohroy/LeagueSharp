@@ -12,6 +12,7 @@ namespace SkinChanger
     internal static class ModelManager
     {
         private const string DataDragonBase = "http://ddragon.leagueoflegends.com/";
+        private const string Language = "zh_CN";
         private static readonly string GameVersion;
         private static readonly Dictionary<int, Model> ObjectList = new Dictionary<int, Model>();
 
@@ -735,10 +736,13 @@ namespace SkinChanger
         }
 
         public static ArrayList GetSkins(string model)
-        {                    //http://ddragon.leagueoflegends.com/cdn/6.5.1/data/zh_CN/champion/Ryze.json
+        {
+            //http://ddragon.leagueoflegends.com/cdn/6.5.1/data/zh_CN/champion/Ryze.json
+            var wc = new WebClient();
+            wc.Encoding = System.Text.Encoding.UTF8;
             var champJson =
-               new WebClient().DownloadString(
-                    DataDragonBase + "cdn/" + GameVersion + "/data/zh_CN/champion/" + model + ".json");
+                wc.DownloadString(
+                    DataDragonBase + "cdn/" + GameVersion + "/data/"+Language +"/champion/" + model + ".json");
             return
                 (ArrayList)
                     ((Dictionary<string, object>)

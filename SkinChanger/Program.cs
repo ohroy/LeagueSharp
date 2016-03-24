@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using LeagueSharp;
 using LeagueSharp.Common;
 
@@ -17,85 +19,15 @@ namespace SkinChanger
             CustomEvents.Game.OnGameLoad += Game_OnGameLoad;
         }
 
-        private static void Game_OnGameLoad(EventArgs args)
+        private static async void Game_OnGameLoad(EventArgs args)
         {
             var skins = Enumerable.Range(0, 53).Select(n => n.ToString()).ToArray();
 
 
             Config = new Menu("SkinChanger", "SkinChanger", true);
-
-
-            var champs = Config.AddSubMenu(new Menu("Champions", "Champions"));
-            champs.AddItem(new MenuItem("Champions", "Reskin Champions").SetValue(true));
-            var allies = champs.AddSubMenu(new Menu("Allies", "Allies"));
-            var enemies = champs.AddSubMenu(new Menu("Enemies", "Enemies"));
-
-            //二级英雄菜单.
-            foreach (var hero in HeroManager.AllHeroes.Where(h => !h.ChampionName.Equals("Ezreal")))
-            {
-                var champMenu = new Menu(hero.ChampionName, hero.ChampionName + hero.Team);
-                var modelUnit = new ModelUnit(hero);
-
-                PlayerList.Add(modelUnit);
-
-                if (hero.IsMe)
-                {
-                    Player = modelUnit;
-                }
-
-                //画出皮肤菜单.
-                foreach (Dictionary<string, object> skin in ModelManager.GetSkins(hero.ChampionName))
-                {
-                    //Console.WriteLine(skin["name"].ToString());
-                    var skinName = skin["name"].ToString().Equals("default")
-                        ? hero.ChampionName
-                        : skin["name"].ToString();
-                    var skinId = (int) skin["num"];
-
-                    var changeSkin = champMenu.AddItem(new MenuItem(skinName, skinName).SetValue(false));
-                    if (!hero.IsMe)
-                    {
-                        changeSkin.DontSave();
-                    }
-                    if (hero.BaseSkinId.Equals(skinId))
-                    {
-                        changeSkin.SetValue(true);
-                    }
-                    //如果当前选项为打开状态，且用户模型不等同于当前模型的
-                    if (changeSkin.IsActive()
-                        && !hero.CharData.BaseSkinName.Equals(skinName)
-                        && hero.IsMe)
-                    {
-                        //设置之前设置过的菜单项目为false
-                        champMenu.Items.Find(h => h.DisplayName.Equals(hero.CharData.BaseSkinName)).SetValue(false);
-                        changeSkin.SetValue(true);
-                        //初始设置皮肤.
-                        modelUnit.SetModel(hero.CharData.BaseSkinName, skinId);
-                    }
-                    
-                    //否则设置菜单项目为TRUE;
-                    var hero1 = hero;
-                    changeSkin.ValueChanged += (s, e) =>
-                    {
-                        if (e.GetNewValue<bool>())
-                        {
-                            champMenu.Items.ForEach(
-                                p =>
-                                {
-                                    if (p.IsActive() && p.Name != skinName)
-                                    {
-                                        p.SetValue(false);
-                                    }
-                                });
-                            modelUnit.SetModel(hero1.ChampionName, skinId);
-                        }
-                    };
-                }
-                var rootMenu = hero.IsAlly ? allies : enemies;
-                rootMenu.AddSubMenu(champMenu);
-            }
+            //画英雄相关菜单.
+           DrawChampionMenu();
             Config.AddToMainMenu();
-
             //画眼菜单.
             var wardMenu = Config.AddSubMenu(new Menu("Wards", "Wards"));
             wardMenu.AddItem(new MenuItem("Ward", "Reskin Wards").SetValue(true));
@@ -125,6 +57,90 @@ namespace SkinChanger
 
             Game.OnInput += Game_OnInput;
         }
+
+        private static void DrawChampionMenu()
+        {
+            var champs = Config.AddSubMenu(new Menu("Champions", "Champions"));
+            champs.AddItem(new MenuItem("Champions", "Reskin Champions").SetValue(true));
+            //var allies = champs.AddSubMenu(new Menu("Allies", "Allies"));
+            //var enemies = champs.AddSubMenu(new Menu("Enemies", "Enemies"));
+            foreach (var hero in HeroManager.AllHeroes.Where(h => !h.ChampionName.Equals("Ezreal")))
+            {
+                var champMenu = new Menu(hero.ChampionName, hero.ChampionName + hero.Team);
+                var modelUnit = new ModelUnit(hero);
+
+                PlayerList.Add(modelUnit);
+
+                if (hero.IsMe)
+                {
+                    Player = modelUnit;
+                }
+                Task task1= Task.Run(() =>
+                {
+                    DrawChampionSkin(champs, champMenu, modelUnit, hero);
+                });
+                //task1.Start();
+                //异步画出皮肤菜单.
+                Console.WriteLine("返回当前操作英雄:{0}", hero.ChampionName);
+            }
+        }
+
+        private static async void DrawChampionSkin(Menu champs, Menu champMenu, ModelUnit modelUnit, Obj_AI_Hero hero)
+        {
+            Console.WriteLine("当前操作英雄:{0}", hero.ChampionName);
+            var skinList= ModelManager.GetSkins(hero.ChampionName);
+            Console.WriteLine("任务完成");
+            //var skinList = ModelManager.GetSkins(hero.ChampionName);
+            foreach (Dictionary<string, object> skin in skinList)
+            {
+                var skinName = skin["name"].ToString().Equals("default")
+                    ? hero.ChampionName
+                    : skin["name"].ToString();
+                var skinId = (int) skin["num"];
+                Console.WriteLine("开始绘制皮肤:{0}", skinName);
+                var changeSkin = champMenu.AddItem(new MenuItem(skinName, skinName).SetValue(false));
+                if (!hero.IsMe)
+                {
+                    changeSkin.DontSave();
+                }
+                if (hero.BaseSkinId.Equals(skinId))
+                {
+                    changeSkin.SetValue(true);
+                }
+                //如果当前选项为打开状态，且用户模型不等同于当前模型的
+                if (changeSkin.IsActive()
+                    && !hero.CharData.BaseSkinName.Equals(skinName)
+                    && hero.IsMe)
+                {
+                    //设置之前设置过的菜单项目为false
+                    champMenu.Items.Find(h => h.DisplayName.Equals(hero.CharData.BaseSkinName)).SetValue(false);
+                    changeSkin.SetValue(true);
+                    //初始设置皮肤.
+                    modelUnit.SetModel(hero.CharData.BaseSkinName, skinId);
+                }
+
+                //否则设置菜单项目为TRUE;
+                var hero1 = hero;
+                changeSkin.ValueChanged += (s, e) =>
+                {
+                    if (e.GetNewValue<bool>())
+                    {
+                        champMenu.Items.ForEach(
+                            p =>
+                            {
+                                if (p.IsActive() && p.Name != skinName)
+                                {
+                                    p.SetValue(false);
+                                }
+                            });
+                        modelUnit.SetModel(hero1.ChampionName, skinId);
+                    }
+                };
+            }
+            var rootMenu = hero.IsAlly ? champs.SubMenu("allies") : champs.SubMenu("enemies");
+            rootMenu.AddSubMenu(champMenu);
+        }
+
 
         private static void Program_ValueChanged(object sender, OnValueChangeEventArgs e)
         {
