@@ -343,12 +343,23 @@ namespace TwistedFate
                 CardSelector.StartSelecting(Cards.Yellow);
             }
 
-            if (Config.Item("SelectBlue").GetValue<KeyBind>().Active ||
+            if (
                 Config.Item("ClearLine").GetValue<KeyBind>().Active)
+            {
+                if (HeroManager.Player.ManaPercent<0.8)
+                {
+                    CardSelector.StartSelecting(Cards.Blue);
+                }
+                else
+                {
+                    CardSelector.StartSelecting(Cards.Red);
+                }
+                
+            }
+            if (Config.Item("SelectBlue").GetValue<KeyBind>().Active)
             {
                 CardSelector.StartSelecting(Cards.Blue);
             }
-
             if (Config.Item("SelectRed").GetValue<KeyBind>().Active)
             {
                 CardSelector.StartSelecting(Cards.Red);
