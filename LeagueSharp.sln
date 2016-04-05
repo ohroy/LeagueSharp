@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SkinChanger", "SkinChanger\SkinChanger.csproj", "{5358D34E-52AF-45B7-B9E5-437A1ADC3000}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TwistedFate", "Twisted Fate\TwistedFate.csproj", "{701772AD-6AAD-48F8-A098-7C01F9F4BF9B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{5358D34E-52AF-45B7-B9E5-437A1ADC3000}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5358D34E-52AF-45B7-B9E5-437A1ADC3000}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5358D34E-52AF-45B7-B9E5-437A1ADC3000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{701772AD-6AAD-48F8-A098-7C01F9F4BF9B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{701772AD-6AAD-48F8-A098-7C01F9F4BF9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{701772AD-6AAD-48F8-A098-7C01F9F4BF9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{701772AD-6AAD-48F8-A098-7C01F9F4BF9B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
