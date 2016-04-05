@@ -346,7 +346,7 @@ namespace TwistedFate
             if (
                 Config.Item("ClearLine").GetValue<KeyBind>().Active)
             {
-                if (HeroManager.Player.ManaPercent<0.8)
+                if (HeroManager.Player.ManaPercent<80)
                 {
                     CardSelector.StartSelecting(Cards.Blue);
                 }
