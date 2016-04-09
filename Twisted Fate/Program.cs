@@ -15,15 +15,14 @@ namespace TwistedFate
 {
     internal class Program
     {
-        private static Menu Config;
+        private static Menu _config;
 
-        private static Spell Q;
-        private static readonly float Qangle = 28*(float) Math.PI/180;
-        private static Orbwalking.Orbwalker SOW;
-        private static Vector2 PingLocation;
-        private static int LastPingT = 0;
-        private static Obj_AI_Hero Player;
-        private static int CastQTick;
+        private static Spell _q;
+        private const float Qangle = 28*(float) Math.PI/180;
+        private static Orbwalking.Orbwalker _sow;
+        private static Vector2 _pingLocation;
+        private static int _lastPingT = 0;
+        private static Obj_AI_Hero _player;
 
         private static void Main(string[] args)
         {
@@ -32,13 +31,13 @@ namespace TwistedFate
 
         private static void Ping(Vector2 position)
         {
-            if (Utils.TickCount - LastPingT < 30*1000) 
+            if (Utils.TickCount - _lastPingT < 30*1000) 
             {
                 return;
             }
             
-            LastPingT = Utils.TickCount;
-            PingLocation = position;
+            _lastPingT = Utils.TickCount;
+            _pingLocation = position;
             SimplePing();
 
             Utility.DelayAction.Add(150, SimplePing);
@@ -49,35 +48,37 @@ namespace TwistedFate
 
         private static void SimplePing()
         {
-            Game.ShowPing(PingCategory.Fallback, PingLocation, true);
+            Game.ShowPing(PingCategory.Fallback, _pingLocation, true);
         }
 
         private static void Game_OnGameLoad(EventArgs args)
         {
             if (ObjectManager.Player.ChampionName != "TwistedFate") return;
-            Player = ObjectManager.Player;
-            Q = new Spell(SpellSlot.Q, 1450);
-            Q.SetSkillshot(0.25f, 40f, 1000f, false, SkillshotType.SkillshotLine);
+            _player = ObjectManager.Player;
+            _q = new Spell(SpellSlot.Q, 1450);
+            _q.SetSkillshot(0.25f, 40f, 1000f, false, SkillshotType.SkillshotLine);
 
             //Make the menu
-            Config = new Menu("Twisted Fate", "TwistedFate", true);
+            _config = new Menu("Twisted Fate", "TwistedFate", true);
 
-            var TargetSelectorMenu = new Menu("Target Selector", "Target Selector");
-            TargetSelector.AddToMenu(TargetSelectorMenu);
-            Config.AddSubMenu(TargetSelectorMenu);
+            var targetSelectorMenu = new Menu("Target Selector", "Target Selector");
+            TargetSelector.AddToMenu(targetSelectorMenu);
+            _config.AddSubMenu(targetSelectorMenu);
 
-            var SowMenu = new Menu("Orbwalking", "Orbwalking");
-            SOW = new Orbwalking.Orbwalker(SowMenu);
-            Config.AddSubMenu(SowMenu);
+            var sowMenu = new Menu("Orbwalking", "Orbwalking");
+            _sow = new Orbwalking.Orbwalker(sowMenu);
+            _config.AddSubMenu(sowMenu);
 
             /* Q */
             var q = new Menu("Q - Wildcards", "Q");
             {
+                //目标被眩晕
                 q.AddItem(new MenuItem("AutoQI", "Auto-Q immobile").SetValue(true));
+                //目标在移动
                 q.AddItem(new MenuItem("AutoQD", "Auto-Q dashing").SetValue(true));
                 q.AddItem(
                     new MenuItem("CastQ", "Cast Q (tap)").SetValue(new KeyBind("U".ToCharArray()[0], KeyBindType.Press)));
-                Config.AddSubMenu(q);
+                _config.AddSubMenu(q);
             }
 
             /* W */
@@ -91,29 +92,19 @@ namespace TwistedFate
                         KeyBindType.Press)));
                 w.AddItem(
                     new MenuItem("SelectRed", "Select Red").SetValue(new KeyBind("T".ToCharArray()[0], KeyBindType.Press)));
-                Config.AddSubMenu(w);
-            }
-
-            var menuItems = new Menu("Items", "Items");
-            {
-                menuItems.AddItem(new MenuItem("itemBotrk", "Botrk").SetValue(true));
-                menuItems.AddItem(new MenuItem("itemYoumuu", "Youmuu").SetValue(true));
-                menuItems.AddItem(
-                    new MenuItem("itemMode", "Use items on").SetValue(
-                        new StringList(new[] {"No", "Mixed mode", "Combo mode", "Both"}, 2)));
-                Config.AddSubMenu(menuItems);
+                _config.AddSubMenu(w);
             }
 
             var r = new Menu("R - Destiny", "R");
             {
                 r.AddItem(new MenuItem("AutoY", "Select yellow card after R").SetValue(true));
-                Config.AddSubMenu(r);
+                _config.AddSubMenu(r);
             }
 
             var misc = new Menu("Misc", "Misc");
             {
                 misc.AddItem(new MenuItem("PingLH", "Ping low health enemies (Only local)").SetValue(true));
-                Config.AddSubMenu(misc);
+                _config.AddSubMenu(misc);
             }
 
             //Damage after combo:
@@ -136,14 +127,9 @@ namespace TwistedFate
                     new MenuItem("Rcircle2", "R Range (minimap)").SetValue(new Circle(true,
                         Color.FromArgb(255, 255, 255, 255))));
                 drawings.AddItem(dmgAfterComboItem);
-                Config.AddSubMenu(drawings);
+                _config.AddSubMenu(drawings);
             }
-
-            Config.AddItem(new MenuItem("Combo", "Combo").SetValue(new KeyBind(32, KeyBindType.Press)));
-            //86
-            Config.AddItem(new MenuItem("ClearLine", "ClearLine").SetValue(new KeyBind(86, KeyBindType.Press)));
-            //
-            Config.AddToMainMenu();
+            _config.AddToMainMenu();
 
             Game.OnUpdate += Game_OnGameUpdate;
             Drawing.OnDraw += Drawing_OnDraw;
@@ -159,6 +145,11 @@ namespace TwistedFate
                                Utils.TickCount - CardSelector.LastWSent > 300;
         }
 
+        /// <summary>
+        /// 释放大招自动黄牌
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
         private static void Obj_AI_Hero_OnProcessSpellCast(Obj_AI_Base sender, GameObjectProcessSpellCastEventArgs args)
         {
             if (!sender.IsMe)
@@ -166,7 +157,7 @@ namespace TwistedFate
                 return;
             }
 
-            if (args.SData.Name.Equals("Gate", StringComparison.InvariantCultureIgnoreCase) && Config.Item("AutoY").GetValue<bool>())
+            if (args.SData.Name.Equals("Gate", StringComparison.InvariantCultureIgnoreCase) && _config.Item("AutoY").GetValue<bool>())
             {
                 CardSelector.StartSelecting(Cards.Yellow);
             }
@@ -174,7 +165,7 @@ namespace TwistedFate
 
         private static void DrawingOnOnEndScene(EventArgs args)
         {
-            var rCircle2 = Config.Item("Rcircle2").GetValue<Circle>();
+            var rCircle2 = _config.Item("Rcircle2").GetValue<Circle>();
             if (rCircle2.Active)
             {
                 Utility.DrawCircle(ObjectManager.Player.Position, 5500, rCircle2.Color, 1, 23, true);
@@ -183,12 +174,12 @@ namespace TwistedFate
 
         private static void Drawing_OnDraw(EventArgs args)
         {
-            var qCircle = Config.Item("Qcircle").GetValue<Circle>();
-            var rCircle = Config.Item("Rcircle").GetValue<Circle>();
+            var qCircle = _config.Item("Qcircle").GetValue<Circle>();
+            var rCircle = _config.Item("Rcircle").GetValue<Circle>();
 
             if (qCircle.Active)
             {
-                Render.Circle.DrawCircle(ObjectManager.Player.Position, Q.Range, qCircle.Color);
+                Render.Circle.DrawCircle(ObjectManager.Player.Position, _q.Range, qCircle.Color);
             }
 
             if (rCircle.Active)
@@ -203,7 +194,7 @@ namespace TwistedFate
             var result = 0;
 
             var startPoint = ObjectManager.Player.ServerPosition.To2D();
-            var originalDirection = Q.Range*(position - startPoint).Normalized();
+            var originalDirection = _q.Range*(position - startPoint).Normalized();
             var originalEndPoint = startPoint + originalDirection;
 
             for (var i = 0; i < points.Count; i++)
@@ -218,7 +209,7 @@ namespace TwistedFate
                     if (k == 2) endPoint = startPoint + originalDirection.Rotated(-Qangle);
 
                     if (point.Distance(startPoint, endPoint, true, true) <
-                        (Q.Width + hitBoxes[i])*(Q.Width + hitBoxes[i]))
+                        (_q.Width + hitBoxes[i])*(_q.Width + hitBoxes[i]))
                     {
                         result++;
                         break;
@@ -235,13 +226,13 @@ namespace TwistedFate
             var hitBoxes = new List<int>();
 
             var startPoint = ObjectManager.Player.ServerPosition.To2D();
-            var originalDirection = Q.Range*(unitPosition - startPoint).Normalized();
+            var originalDirection = _q.Range*(unitPosition - startPoint).Normalized();
 
             foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>())
             {
                 if (enemy.IsValidTarget() && enemy.NetworkId != unit.NetworkId)
                 {
-                    var pos = Q.GetPrediction(enemy);
+                    var pos = _q.GetPrediction(enemy);
                     if (pos.Hitchance >= HitChance.Medium)
                     {
                         points.Add(pos.UnitPosition.To2D());
@@ -266,7 +257,7 @@ namespace TwistedFate
                 {
                     var pos = posiblePositions[i];
                     var direction = (pos - startPoint).Normalized().Perpendicular();
-                    var k = (2/3*(unit.BoundingRadius + Q.Width));
+                    var k = (2/3*(unit.BoundingRadius + _q.Width));
                     posiblePositions.Add(startPoint - k*direction);
                     posiblePositions.Add(startPoint + k*direction);
                 }
@@ -288,15 +279,15 @@ namespace TwistedFate
             if (bestHit + 1 <= minTargets)
                 return;
 
-            Q.Cast(bestPosition.To3D(), true);
+            _q.Cast(bestPosition.To3D(), true);
         }
 
         private static float ComboDamage(Obj_AI_Hero hero)
         {
             var dmg = 0d;
-            dmg += Player.GetSpellDamage(hero, SpellSlot.Q)*2;
-            dmg += Player.GetSpellDamage(hero, SpellSlot.W);
-            dmg += Player.GetSpellDamage(hero, SpellSlot.Q);
+            dmg += _player.GetSpellDamage(hero, SpellSlot.Q)*2;
+            dmg += _player.GetSpellDamage(hero, SpellSlot.W);
+            dmg += _player.GetSpellDamage(hero, SpellSlot.Q);
 
             if (ObjectManager.Player.GetSpellSlot("SummonerIgnite") != SpellSlot.Unknown)
             {
@@ -308,7 +299,7 @@ namespace TwistedFate
 
         private static void Game_OnGameUpdate(EventArgs args)
         {
-            if (Config.Item("PingLH").GetValue<bool>())
+            if (_config.Item("PingLH").GetValue<bool>())
                 foreach (
                     var enemy in
                         ObjectManager.Get<Obj_AI_Hero>()
@@ -318,119 +309,84 @@ namespace TwistedFate
                                     h.IsValidTarget() && ComboDamage(h) > h.Health))
                 {
                     Ping(enemy.Position.To2D());
+                    //提示有人头在大招范围内可以抢了。
+                    var drawPosition = Drawing.WorldToScreen(_player.Position);
+                    var msg = "在大招范围内有人头可以收割了.";
+                    Drawing.DrawText(drawPosition[0] - (msg.Length) * 5, drawPosition[1] -300, System.Drawing.Color.Yellow, msg);
                 }
-
-            if (Config.Item("CastQ").GetValue<KeyBind>().Active)
+            //释放Q技能逻辑
+            SmartQLogic();
+            //W技能逻辑
+            SmartWLogic();
+        }
+        /// <summary>
+        /// 释放Q技能逻辑
+        /// </summary>
+        private static void SmartQLogic()
+        {
+            if (!_q.IsReady())
+                return;
+            //Auto Q
+            var autoQi = _config.Item("AutoQI").GetValue<bool>();
+            var autoQd = _config.Item("AutoQD").GetValue<bool>();
+            foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(unit => unit.IsValidTarget(_q.Range)))
             {
-                CastQTick = Utils.TickCount;
-            }
-
-            if (Utils.TickCount - CastQTick < 500)
-            {
-                var qTarget = TargetSelector.GetTarget(Q.Range, TargetSelector.DamageType.Magical);
-                if (qTarget != null)
+                var qTarget = TargetSelector.GetTarget(_q.Range, TargetSelector.DamageType.Magical);
+                if (!qTarget.IsValidTarget())
+                    continue;
+                var qPrediction = _q.GetPrediction(qTarget);
+                //抢人头.
+                if (qTarget.Health < _q.GetDamage(qTarget))
                 {
-                    Q.Cast(qTarget);
+                    if (qPrediction.Hitchance >= HitChance.VeryHigh)
+                    {
+                        _q.Cast(qPrediction.CastPosition);
+                    }
+                }
+                
+                if (
+                    //眩晕
+                    (qPrediction.Hitchance == HitChance.Immobile && autoQi) ||
+                    //冲脸
+                    (qPrediction.Hitchance == HitChance.Dashing && autoQd)
+                    )
+                {
+                    _q.Cast(qPrediction.CastPosition);
                 }
             }
-
-            var combo = Config.Item("Combo").GetValue<KeyBind>().Active;
-
-            //Select cards.
-            if (Config.Item("SelectYellow").GetValue<KeyBind>().Active ||
-                combo)
+        }
+        /// <summary>
+        /// 释放W技能逻辑.
+        /// </summary>
+        private static void SmartWLogic()
+        {
+            //==================黄牌逻辑
+            if (_config.Item("SelectYellow").GetValue<KeyBind>().Active)
             {
                 CardSelector.StartSelecting(Cards.Yellow);
             }
-
-            if (
-                Config.Item("ClearLine").GetValue<KeyBind>().Active)
-            {
-                if (HeroManager.Player.ManaPercent<80)
-                {
-                    CardSelector.StartSelecting(Cards.Blue);
-                }
-                else
-                {
-                    CardSelector.StartSelecting(Cards.Red);
-                }
-                
-            }
-            if (Config.Item("SelectBlue").GetValue<KeyBind>().Active)
+            else if(_config.Item("SelectBlue").GetValue<KeyBind>().Active)
             {
                 CardSelector.StartSelecting(Cards.Blue);
             }
-            if (Config.Item("SelectRed").GetValue<KeyBind>().Active)
+            else if (_config.Item("SelectRed").GetValue<KeyBind>().Active)
             {
                 CardSelector.StartSelecting(Cards.Red);
             }
-/*
-            if (CardSelector.Status == SelectStatus.Selected && combo)
+            else
             {
-                var target = SOW.GetTarget();
-                if (target.IsValidTarget() && target is Obj_AI_Hero && Items.HasItem("DeathfireGrasp") && ComboDamage((Obj_AI_Hero)target) >= target.Health)
+                switch (_sow.ActiveMode)
                 {
-                    Items.UseItem("DeathfireGrasp", (Obj_AI_Hero) target);
+                    case Orbwalking.OrbwalkingMode.Combo:
+                        CardSelector.StartSelecting(Cards.Yellow);
+                        break;
+                    case Orbwalking.OrbwalkingMode.LaneClear:
+                        
+                    case Orbwalking.OrbwalkingMode.Mixed:
+                        CardSelector.StartSelecting(HeroManager.Player.ManaPercent < 80 ? Cards.Blue : Cards.Red);
+                        break;
                 }
-            }
-*/
-
-            //Auto Q
-            var autoQI = Config.Item("AutoQI").GetValue<bool>();
-            var autoQD = Config.Item("AutoQD").GetValue<bool>();
-
-
-            if (ObjectManager.Player.Spellbook.CanUseSpell(SpellSlot.Q) == SpellState.Ready && (autoQD || autoQI))
-                foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>())
-                {
-                    if (enemy.IsValidTarget(Q.Range*2))
-                    {
-                        var pred = Q.GetPrediction(enemy);
-                        if ((pred.Hitchance == HitChance.Immobile && autoQI) ||
-                            (pred.Hitchance == HitChance.Dashing && autoQD))
-                        {
-                            CastQ(enemy, pred.UnitPosition.To2D());
-                        }
-                    }
-                }
-
-
-            var useItemModes = Config.Item("itemMode").GetValue<StringList>().SelectedIndex;
-            if (
-                !((SOW.ActiveMode == Orbwalking.OrbwalkingMode.Combo &&
-                   (useItemModes == 2 || useItemModes == 3))
-                  ||
-                  (SOW.ActiveMode == Orbwalking.OrbwalkingMode.Mixed &&
-                   (useItemModes == 1 || useItemModes == 3))))
-                return;
-
-            var botrk = Config.Item("itemBotrk").GetValue<bool>();
-            var youmuu = Config.Item("itemYoumuu").GetValue<bool>();
-            var target = SOW.GetTarget() as Obj_AI_Base;
-
-            if (botrk)
-            {
-                if (target != null && target.Type == ObjectManager.Player.Type &&
-                    target.ServerPosition.Distance(ObjectManager.Player.ServerPosition) < 450)
-                {
-                    var hasCutGlass = Items.HasItem(3144);
-                    var hasBotrk = Items.HasItem(3153);
-
-                    if (hasBotrk || hasCutGlass)
-                    {
-                        var itemId = hasCutGlass ? 3144 : 3153;
-                        var damage = ObjectManager.Player.GetItemDamage(target, Damage.DamageItems.Botrk);
-                        if (hasCutGlass ||
-                            ObjectManager.Player.Health + damage < ObjectManager.Player.MaxHealth &&
-                            Items.CanUseItem(itemId))
-                            Items.UseItem(itemId, target);
-                    }
-                }
-            }
-
-            if (youmuu && target != null && target.Type == ObjectManager.Player.Type &&
-                Orbwalking.InAutoAttackRange(target) && Items.CanUseItem(3142))
-                Items.UseItem(3142);
+            }  
         }
     }
 }
