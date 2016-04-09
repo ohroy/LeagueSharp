@@ -72,12 +72,53 @@ namespace TwistedFate
             /* Q */
             var q = new Menu("Q - Wildcards", "Q");
             {
-                //目标被眩晕
-                q.AddItem(new MenuItem("AutoQI", "Auto-Q immobile").SetValue(true));
-                //目标在移动
-                q.AddItem(new MenuItem("AutoQD", "Auto-Q dashing").SetValue(true));
-                q.AddItem(
-                    new MenuItem("CastQ", "Cast Q (tap)").SetValue(new KeyBind("U".ToCharArray()[0], KeyBindType.Press)));
+                /*
+        /// <summary>
+        /// The target is immobile.
+        /// </summary>
+        Immobile = 8,
+
+        /// <summary>
+        /// The unit is dashing.
+        /// </summary>
+        Dashing = 7,
+
+        /// <summary>
+        /// Very high probability of hitting the target.
+        /// </summary>
+        VeryHigh = 6,
+
+        /// <summary>
+        /// High probability of hitting the target.
+        /// </summary>
+        High = 5,
+
+        /// <summary>
+        /// Medium probability of hitting the target.
+        /// </summary>
+        Medium = 4,
+
+        /// <summary>
+        /// Low probability of hitting the target.
+        /// </summary>
+        Low = 3,
+
+        /// <summary>
+        /// Impossible to hit the target.
+        /// </summary>
+        Impossible = 2,
+
+        /// <summary>
+        /// The target is out of range.
+        /// </summary>
+        OutOfRange = 1,
+
+        /// <summary>
+        /// The target is blocked by other units.
+        /// </summary>
+        Collision = 0
+         */
+                q.AddItem(new MenuItem("QCastLevel", "Auto-Q Level").SetValue(new Slider(3, 1, 5)).SetTooltip("More High More Precision"));
                 _config.AddSubMenu(q);
             }
 
@@ -327,11 +368,10 @@ namespace TwistedFate
             if (!_q.IsReady())
                 return;
             //Auto Q
-            var autoQi = _config.Item("AutoQI").GetValue<bool>();
-            var autoQd = _config.Item("AutoQD").GetValue<bool>();
-            foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(unit => unit.IsValidTarget(_q.Range)))
+            var qLevel = _config.Item("QCastLevel").GetValue<HitChance>();
+            foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(unit => unit.IsValidTarget(_q.Range*2)))
             {
-                var qTarget = TargetSelector.GetTarget(_q.Range, TargetSelector.DamageType.Magical);
+                var qTarget = TargetSelector.GetTarget(_q.Range*2, TargetSelector.DamageType.Magical);
                 if (!qTarget.IsValidTarget())
                     continue;
                 var qPrediction = _q.GetPrediction(qTarget);
@@ -340,19 +380,17 @@ namespace TwistedFate
                 {
                     if (qPrediction.Hitchance >= HitChance.VeryHigh)
                     {
-                        _q.Cast(qPrediction.CastPosition);
+                        CastQ(qTarget, qPrediction.UnitPosition.To2D());
+                        //_q.Cast(qPrediction.CastPosition);
                     }
                 }
-                
-                if (
-                    //眩晕
-                    (qPrediction.Hitchance == HitChance.Immobile && autoQi) ||
-                    //冲脸
-                    (qPrediction.Hitchance == HitChance.Dashing && autoQd)
-                    )
+                else if(qPrediction.Hitchance >= qLevel + 3)
                 {
-                    _q.Cast(qPrediction.CastPosition);
+                    CastQ(qTarget, qPrediction.UnitPosition.To2D());
+                    //_q.Cast(qPrediction.CastPosition);
                 }
+
+
             }
         }
         /// <summary>
