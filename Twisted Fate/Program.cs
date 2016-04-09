@@ -368,7 +368,7 @@ namespace TwistedFate
             if (!_q.IsReady())
                 return;
             //Auto Q
-            var qLevel = _config.Item("QCastLevel").GetValue<HitChance>();
+            var qLevel = _config.Item("QCastLevel").GetValue<Slider>().Value;
             foreach (var enemy in ObjectManager.Get<Obj_AI_Hero>().Where(unit => unit.IsValidTarget(_q.Range*2)))
             {
                 var qTarget = TargetSelector.GetTarget(_q.Range*2, TargetSelector.DamageType.Magical);
@@ -384,7 +384,7 @@ namespace TwistedFate
                         //_q.Cast(qPrediction.CastPosition);
                     }
                 }
-                else if(qPrediction.Hitchance >= qLevel + 3)
+                else if((int)qPrediction.Hitchance >= qLevel + 3)
                 {
                     CastQ(qTarget, qPrediction.UnitPosition.To2D());
                     //_q.Cast(qPrediction.CastPosition);
