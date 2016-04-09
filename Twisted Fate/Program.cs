@@ -384,7 +384,8 @@ namespace TwistedFate
                         //_q.Cast(qPrediction.CastPosition);
                     }
                 }
-                else if((int)qPrediction.Hitchance >= qLevel + 3)
+                else if((int)qPrediction.Hitchance >= qLevel + 3
+                    && HeroManager.Player.ManaPercent > 60)
                 {
                     CastQ(qTarget, qPrediction.UnitPosition.To2D());
                     //_q.Cast(qPrediction.CastPosition);
@@ -416,7 +417,13 @@ namespace TwistedFate
                 switch (_sow.ActiveMode)
                 {
                     case Orbwalking.OrbwalkingMode.Combo:
-                        CardSelector.StartSelecting(Cards.Yellow);
+                        var tmpTarget = TargetSelector.GetTarget(_player.AttackRange*2,
+                            TargetSelector.DamageType.Physical);
+                        if (tmpTarget.IsValid)
+                        {
+                            CardSelector.StartSelecting(Cards.Yellow);
+                        }
+                        
                         break;
                     case Orbwalking.OrbwalkingMode.LaneClear:
                         
