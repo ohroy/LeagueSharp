@@ -352,8 +352,8 @@ namespace TwistedFate
                     Ping(enemy.Position.To2D());
                     //提示有人头在大招范围内可以抢了。
                     var drawPosition = Drawing.WorldToScreen(_player.Position);
-                    var msg = "在大招范围内有人头可以收割了.";
-                    Drawing.DrawText(drawPosition[0] - (msg.Length) * 5, drawPosition[1] -300, System.Drawing.Color.Yellow, msg);
+                    var msg = "YOU CAN KSssssssssssssssssss.";
+                    Drawing.DrawText(drawPosition[0] - (msg.Length) * 5, drawPosition[1] -200, System.Drawing.Color.Yellow, msg);
                 }
             //释放Q技能逻辑
             SmartQLogic();
@@ -389,6 +389,15 @@ namespace TwistedFate
                 {
                     CastQ(qTarget, qPrediction.UnitPosition.To2D());
                     //_q.Cast(qPrediction.CastPosition);
+                }
+                else if(qPrediction.Hitchance >= HitChance.Dashing)
+                {
+                    if (_sow.ActiveMode == Orbwalking.OrbwalkingMode.Combo
+                        || HeroManager.Player.ManaPercent > 30
+                        )
+                    {
+                        CastQ(qTarget, qPrediction.UnitPosition.To2D());
+                    }
                 }
 
 
