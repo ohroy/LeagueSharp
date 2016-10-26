@@ -323,6 +323,11 @@ namespace TwistedFate
             _q.Cast(bestPosition.To3D(), true);
         }
 
+        /// <summary>
+        /// 计算伤害
+        /// </summary>
+        /// <param name="hero"></param>
+        /// <returns></returns>
         private static float ComboDamage(Obj_AI_Hero hero)
         {
             var dmg = 0d;
@@ -360,6 +365,7 @@ namespace TwistedFate
             //W技能逻辑
             SmartWLogic();
         }
+
         /// <summary>
         /// 释放Q技能逻辑
         /// </summary>
